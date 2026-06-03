@@ -25,11 +25,16 @@ def login(
             detail="Email and password are required.",
         )
 
-    token = auth_service.authenticate(email=payload.email, password=payload.password)
-    if token is None:
+    auth_result = auth_service.authenticate(
+        email=payload.email,
+        password=payload.password,
+        remember_me=payload.remember_me,
+    )
+    if auth_result is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
         )
 
-    return LoginResponse(access_token=token, token_type="bearer")
+    token, expires_in = auth_result
+    return LoginResponse(access_token=token, token_type="bearer", expires_in=expires_in)
