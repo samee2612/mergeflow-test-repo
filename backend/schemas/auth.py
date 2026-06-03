@@ -14,13 +14,8 @@ class LoginRequest(BaseModel):
         description="Plain-text password submitted over HTTPS.",
         examples=["correct-horse-battery"],
     )
-    remember_me: bool = Field(
-        default=False,
-        description="Requests a longer-lived token for trusted devices.",
-    )
 
 
 class LoginResponse(BaseModel):
     access_token: str = Field(..., description="JWT access token for authenticated requests.")
     token_type: str = Field(default="bearer", description="OAuth token type.")
-    expires_in: int = Field(..., description="Token lifetime in seconds.")
