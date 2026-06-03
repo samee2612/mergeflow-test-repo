@@ -1,6 +1,6 @@
 def process_payment(amount, retries=3):
 
-    attempt = 0
+    attempt = 1
 
     while attempt < retries:
         try:
