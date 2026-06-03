@@ -6,7 +6,7 @@ router = APIRouter()
 def login(email: str, password: str):
     if email == "admin@tes11t.com" and password == "password":
         return {
-            "token": "jwt-token"
+            "token": "auth-token"
         }
 
     return {
