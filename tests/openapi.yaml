@@ -1,28 +1,6 @@
 openapi: 3.0.3
 info:
-  title: MergeFlow API
+  title: MergeFlow Test Repo API
   version: 1.0.0
-  description: API for MergeFlow services.
-paths:
-  /health:
-    get:
-      tags:
-        - health
-      summary: Return service health status
-      operationId: health_check
-      responses:
-        '200':
-          description: Service is healthy and ready to accept traffic.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                  service:
-                    type: string
-                example:
-                  status: ok
-                  service: mergeflow-test-repo
-      security: []
+  description: This OpenAPI document reflects the state of the API after PR 45, which reverted PR #44. The `/health` endpoint has been removed, and no new endpoints were introduced.
+paths: {}
