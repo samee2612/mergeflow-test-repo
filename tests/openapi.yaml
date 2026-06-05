@@ -1,20 +1,78 @@
 openapi: 3.0.3
 info:
-  title: 'MergeFlow API Spec for samee2612/mergeflow-test-repo PR #40'
-  version: 0.1.0
-  description: Minimal valid OpenAPI fallback generated because Gemini OpenAPI generation
-    failed. Endpoint-level details were not detected from Step 3 analysis.
-paths: {}
-x-mergeflow:
-  repository: samee2612/mergeflow-test-repo
-  pr_number: 40
-  title: Add login API for MergeFlow Step 5 test
-  classification:
-  - API
-  - Service Logic
-  - Validation
-  classification_summary: Enhanced the login API to accept a 'remember_me' flag, which
-    adjusts the token expiration time based on user preference.
-  generator_error: "OpenAPI YAML is not well-formed: while scanning for the next token\n\
-    found character '`' that cannot start any token\n  in \"<unicode string>\", line\
-    \ 132, column 1:\n    ```\n    ^"
+  title: MergeFlow API
+  version: 1.0.0
+  description: API for MergeFlow services. This version reflects changes from PR #41.
+paths:
+  /login:
+    post:
+      tags:
+        - auth
+      summary: Log in with email and password.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  title: Email
+                  description: Email address for the account attempting to log in.
+                  example: admin@example.com
+                  type: string
+                password:
+                  title: Password
+                  description: Plain text password submitted by the user.
+                  example: correct-horse-battery-staple
+                  type: string
+                  minLength: 8
+              required:
+                - email
+                - password
+            example:
+              email: admin@example.com
+              password: correct-horse-battery-staple
+      responses:
+        '200':
+          description: Login succeeded and returned a bearer token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: mergeflow-test-token-for-admin-user
+                  token_type:
+                    type: string
+                    example: bearer
+        '400':
+          description: The request body is missing required fields or contains invalid values.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: Email and password are required.
+              example:
+                detail: Email and password are required.
+        '401':
+          description: The supplied email and password do not match a known user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: Invalid email or password.
+              example:
+                detail: Invalid email or password.
+x-mergeflow-env-vars:
+  AUTH_TOKEN_ISSUER:
+    description: The issuer for authentication tokens. Defaults to "mergeflow-test".
+    optional: true
