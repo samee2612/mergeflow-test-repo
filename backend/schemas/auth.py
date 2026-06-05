@@ -13,11 +13,6 @@ class LoginRequest(BaseModel):
         description="Plain text password submitted by the user.",
         example="correct-horse-battery-staple",
     )
-    remember_me: bool = Field(
-        default=False,
-        description="When true, issue a longer-lived login token for trusted clients.",
-        example=True,
-    )
 
 
 class LoginResponse(BaseModel):
@@ -30,11 +25,6 @@ class LoginResponse(BaseModel):
         default="bearer",
         description="Token type clients should use in the Authorization header.",
         example="bearer",
-    )
-    expires_in: int = Field(
-        ...,
-        description="Token lifetime in seconds.",
-        example=86400,
     )
 
 

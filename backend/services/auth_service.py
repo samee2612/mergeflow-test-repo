@@ -17,10 +17,9 @@ DEMO_USERS = {
 class AuthToken:
     token: str
     token_type: str = "bearer"
-    expires_in: int = 3600
 
 
-def authenticate_user(email: str, password: str, remember_me: bool = False) -> AuthToken | None:
+def authenticate_user(email: str, password: str) -> AuthToken | None:
     """Return a demo token when credentials match the in-memory user store."""
     normalized_email = email.strip().lower()
     user = DEMO_USERS.get(normalized_email)
@@ -33,5 +32,4 @@ def authenticate_user(email: str, password: str, remember_me: bool = False) -> A
 
     issuer = os.getenv("AUTH_TOKEN_ISSUER", "mergeflow-test")
     token = f"{issuer}-token-for-{user['user_id']}"
-    expires_in = 86400 if remember_me else 3600
-    return AuthToken(token=token, expires_in=expires_in)
+    return AuthToken(token=token)
