@@ -1,0 +1,13 @@
+{
+  "info": {
+    "name": "MergeFlow API Spec for samee2612/mergeflow-test-repo PR #40",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
+    }
+  ]
+}
