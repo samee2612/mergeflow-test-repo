@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: MergeFlow Login API
+  version: 1.0.0
+  description: API for user login functionality in MergeFlow.
+paths:
+  /login:
+    post:
+      tags:
+        - auth
+      summary: Log in with email and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email address for the account attempting to log in.
+                  example: admin@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  description: Plain text password submitted by the user.
+                  example: correct-horse-battery-staple
+              required:
+                - email
+                - password
+            example:
+              email: admin@example.com
+              password: correct-horse-battery-staple
+      responses:
+        '200':
+          description: Successful login, returns a bearer token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: Bearer token returned after successful authentication.
+                    example: demo-token-for-admin-user
+                  token_type:
+                    type: string
+                    default: bearer
+                    description: Token type clients should use in the Authorization header.
+                    example: bearer
+                required:
+                  - token
+                  - token_type
+              example:
+                token: mergeflow-test-token-for-admin-user
+                token_type: bearer
+        '400':
+          description: Bad Request - Missing or invalid input fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    description: Human-readable error explaining why login failed.
+                    example: Email and password are required.
+                required:
+                  - detail
+              examples:
+                missing_fields:
+                  summary: Missing email and password
+                  value:
+                    detail: Email and password are required.
+                invalid_values:
+                  summary: Invalid email or password format/length
+                  value:
+                    detail: Email and password are required and must be valid.
+        '401':
+          description: Unauthorized - Invalid email or password combination.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    description: Human-readable error explaining why login failed.
+                    example: Invalid email or password.
+                required:
+                  - detail
+              example:
+                detail: Invalid email or password.
+x-mergeflow-env-vars:
+  - name: AUTH_TOKEN_ISSUER
+    description: The issuer for the authentication token. Defaults to "mergeflow-test".
+    optional: true
