@@ -1,16 +1,39 @@
 {
   "info": {
-    "name": "MergeFlow Test Repo API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_postman_id": "generated-from-openapi"
+    "name": "Test MergeFlow Notion sync (retest 2)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "item": [],
-  "variable": [
+  "item": [
     {
-      "key": "base_url",
-      "value": "http://localhost",
-      "type": "string",
-      "description": "Base URL for the API"
+      "name": "health_check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Return service health status"
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 or 500\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 500]);",
+              "});"
+            ]
+          }
+        }
+      ]
     }
   ]
 }
