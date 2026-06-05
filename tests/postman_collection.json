@@ -1,13 +1,89 @@
 {
   "info": {
-    "name": "MergeFlow API Spec for samee2612/mergeflow-test-repo PR #40",
+    "name": "MergeFlow API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "item": [],
-  "variable": [
+  "item": [
     {
-      "key": "base_url",
-      "value": ""
+      "name": "login",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"correct-horse-battery-staple\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "description": "Log in with email and password."
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Set base_url if not already set. You can also set this in Postman's Environment variables.",
+          "if (!pm.environment.get(\"base_url\")) {",
+          "  pm.environment.set(\"base_url\", \"http://localhost:8000\"); // Default to localhost:8000 or your API's default host",
+          "}"
+        ],
+        "type": "javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Tests for the login endpoint",
+          "const responseCode = pm.response.code;",
+          "const expectedCodes = [200, 400, 401];",
+          "",
+          "pm.test(`Status code is one of ${expectedCodes.join(', ')}`, function () {",
+          "    pm.expect(responseCode).to.be.oneOf(expectedCodes);",
+          "});",
+          "",
+          "// Additional tests for specific status codes",
+          "if (responseCode === 200) {",
+          "    pm.test(\"Response contains token and token_type\", function () {",
+          "        const responseData = pm.response.json();",
+          "        pm.expect(responseData).to.have.property('token');",
+          "        pm.expect(responseData).to.have.property('token_type');",
+          "        pm.expect(responseData.token_type).to.eql('bearer');",
+          "        // Optionally, store the token for subsequent requests",
+          "        // pm.environment.set(\"AUTH_TOKEN\", responseData.token);",
+          "    });",
+          "} else if (responseCode === 400) {",
+          "    pm.test(\"Response contains detail for bad request\", function () {",
+          "        const responseData = pm.response.json();",
+          "        pm.expect(responseData).to.have.property('detail');",
+          "    });",
+          "} else if (responseCode === 401) {",
+          "    pm.test(\"Response contains detail for unauthorized\", function () {",
+          "        const responseData = pm.response.json();",
+          "        pm.expect(responseData).to.have.property('detail');",
+          "    });",
+          "}"
+        ],
+        "type": "javascript"
+      }
     }
   ]
 }
