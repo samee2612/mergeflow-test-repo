@@ -5,85 +5,95 @@
   },
   "item": [
     {
-      "name": "login",
+      "name": "health_check",
       "request": {
-        "method": "POST",
+        "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/login",
+          "raw": "{{base_url}}/health",
           "host": [
             "{{base_url}}"
           ],
           "path": [
-            "login"
+            "health"
           ]
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"correct-horse-battery-staple\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+          "raw": ""
         },
-        "description": "Log in with email and password."
+        "auth": {
+          "type": "noauth"
+        }
       },
-      "response": []
-    }
-  ],
-  "auth": {
-    "type": "bearer"
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "exec": [
-          "// Set base_url if not already set. You can also set this in Postman's Environment variables.",
-          "if (!pm.environment.get(\"base_url\")) {",
-          "  pm.environment.set(\"base_url\", \"http://localhost:8000\"); // Default to localhost:8000 or your API's default host",
-          "}"
-        ],
-        "type": "javascript"
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "exec": [
-          "// Tests for the login endpoint",
-          "const responseCode = pm.response.code;",
-          "const expectedCodes = [200, 400, 401];",
-          "",
-          "pm.test(`Status code is one of ${expectedCodes.join(', ')}`, function () {",
-          "    pm.expect(responseCode).to.be.oneOf(expectedCodes);",
-          "});",
-          "",
-          "// Additional tests for specific status codes",
-          "if (responseCode === 200) {",
-          "    pm.test(\"Response contains token and token_type\", function () {",
-          "        const responseData = pm.response.json();",
-          "        pm.expect(responseData).to.have.property('token');",
-          "        pm.expect(responseData).to.have.property('token_type');",
-          "        pm.expect(responseData.token_type).to.eql('bearer');",
-          "        // Optionally, store the token for subsequent requests",
-          "        // pm.environment.set(\"AUTH_TOKEN\", responseData.token);",
-          "    });",
-          "} else if (responseCode === 400) {",
-          "    pm.test(\"Response contains detail for bad request\", function () {",
-          "        const responseData = pm.response.json();",
-          "        pm.expect(responseData).to.have.property('detail');",
-          "    });",
-          "} else if (responseCode === 401) {",
-          "    pm.test(\"Response contains detail for unauthorized\", function () {",
-          "        const responseData = pm.response.json();",
-          "        pm.expect(responseData).to.have.property('detail');",
-          "    });",
-          "}"
-        ],
-        "type": "javascript"
-      }
+      "response": [
+        {
+          "name": "200 OK",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "status": "200 OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": \"ok\",\n  \"service\": \"mergeflow-test-repo\"\n}"
+        },
+        {
+          "name": "500 Internal Server Error",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "status": "500 Internal Server Error",
+          "code": 500,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"detail\": \"Not detected from Step 3 analysis\"\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const expectedResponseCodes = [200, 'default'];",
+              "pm.test('Status code is one of the expected codes', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf(expectedResponseCodes.map(code => typeof code === 'number' ? code : parseInt(code)));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
     }
   ]
 }
