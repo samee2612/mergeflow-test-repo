@@ -1,146 +1,317 @@
-# API Analysis: MergeFlow PR 40
+```markdown
+# API Analysis Document for MergeFlow PR #41
 
 ## 1. Change Summary
 
-This PR enhances the existing `/login` API endpoint. The primary change is the addition of a `remember_me` boolean field to the login request payload. This flag, when set to `True`, instructs the service to issue a longer-lived authentication token (86400 seconds) compared to the default token (3600 seconds). The `LoginResponse` model has been updated to include an `expires_in` field to communicate the token's validity period to the client.
+This PR refactors the login API by removing the `remember_me` functionality and simplifying the response. The `remember_me` field has been removed from the `LoginRequest` schema and is no longer accepted in the request payload. Consequently, the `expires_in` field has been removed from the `LoginResponse` schema and the `authenticate_user` service function. The API now only returns a `token` and `token_type` upon successful login.
 
 ## 2. Endpoint(s) Detected
 
-### POST /login
-
-*   **Operation Name:** `login`
-*   **Feature Area:** Authentication
-*   **Summary:** Log in with email and password, with an option to extend token expiration.
-*   **Auth Required:** No (This is the login endpoint itself)
+*   **Login Endpoint**
+    *   Method: `POST`
+    *   Path: `/login`
+    *   Feature Area: Authentication
 
 ## 3. Directly Related Files Considered
 
-*   `backend/routes/auth.py`: Defines the `/login` API route and its handler function.
-*   `backend/schemas/auth.py`: Defines the Pydantic models for `LoginRequest` and `LoginResponse`.
-*   `backend/services/auth_service.py`: Contains the `authenticate_user` function, which now accepts the `remember_me` parameter.
+*   `backend/routes/auth.py`
+*   `backend/schemas/auth.py`
+*   `backend/services/auth_service.py`
 
 ## 4. API Specification Snapshot
 
-### POST /login
+### Endpoint: Login
 
-*   **method:** `POST`
-*   **path:** `/login`
-*   **tags:** `auth`
-*   **summary:** Log in with email and password
-*   **auth:** Not detected from provided context (This is the authentication endpoint)
-*   **parameters:**
-    *   **Path Parameters:** None
-    *   **Query Parameters:** None
-    *   **Headers:**
-        *   `X-Request-ID` (Optional, string): Optional client-generated request ID for tracing login attempts.
-*   **request body:**
-    *   **Schema:** `LoginRequest` (from `backend/schemas/auth.py`)
-    *   **Example:**
+*   **Operation Name:** `login`
+*   **Method:** `POST`
+*   **Path:** `/login`
+*   **Tags:** `auth`
+*   **Summary:** Log in with email and password.
+*   **Auth Requirement:** Not specified, assumed none for login.
+*   **Parameters:**
+    *   Path Parameters: None
+    *   Query Parameters: None
+*   **Headers Required:** None explicitly mentioned, but `Content-Type: application/json` is implied for POST requests with a body.
+*   **Request Body:**
+    *   **Schema:**
+        ```json
+        {
+          "type": "object",
+          "properties": {
+            "email": {
+              "title": "Email",
+              "description": "Email address for the account attempting to log in.",
+              "example": "admin@example.com",
+              "type": "string"
+            },
+            "password": {
+              "title": "Password",
+              "description": "Plain text password submitted by the user.",
+              "example": "correct-horse-battery-staple",
+              "type": "string",
+              "minLength": 8
+            }
+          },
+          "required": ["email", "password"]
+        }
+        ```
+    *   **Example Request Body:**
         ```json
         {
           "email": "admin@example.com",
-          "password": "correct-horse-battery-staple",
-          "remember_me": true
+          "password": "correct-horse-battery-staple"
         }
         ```
-*   **env vars:**
-    *   `AUTH_TOKEN_ISSUER` (Optional, string): Used to prefix the generated token. Defaults to "mergeflow-test".
-*   **responses:**
+*   **Env Vars Needed:** `AUTH_TOKEN_ISSUER` (optional, defaults to "mergeflow-test")
+*   **Direct Dependencies / Related Files:**
+    *   `backend/schemas/auth.py` (for `LoginRequest`, `LoginResponse`, `ErrorResponse`)
+    *   `backend/services/auth_service.py` (for `authenticate_user`)
+*   **Responses:**
     *   **200 OK:**
         *   **Description:** Login succeeded and returned a bearer token.
-        *   **Response Body Schema:** `LoginResponse`
-        *   **Example:**
+        *   **Response Body Shape:**
+            ```json
+            {
+              "token": "string",
+              "token_type": "string"
+            }
+            ```
+        *   **Example Successful Response:**
             ```json
             {
               "token": "mergeflow-test-token-for-admin-user",
-              "token_type": "bearer",
-              "expires_in": 86400
+              "token_type": "bearer"
             }
             ```
     *   **400 Bad Request:**
         *   **Description:** The request body is missing required fields or contains invalid values.
-        *   **Response Body Schema:** `ErrorResponse`
-        *   **Example:**
+        *   **Response Body Shape:**
             ```json
             {
-              "detail": "Email and password are required and must be valid."
+              "detail": "string"
             }
+            ```
+        *   **Example Error Response:**
+            ```json
+            {"detail": "Email and password are required."}
+            ```
+            or
+            ```json
+            {"detail": "Email and password are required and must be valid."}
             ```
     *   **401 Unauthorized:**
         *   **Description:** The supplied email and password do not match a known user.
-        *   **Response Body Schema:** `ErrorResponse`
-        *   **Example:**
+        *   **Response Body Shape:**
             ```json
             {
-              "detail": "Invalid email or password."
+              "detail": "string"
             }
+            ```
+        *   **Example Error Response:**
+            ```json
+            {"detail": "Invalid email or password."}
             ```
 
 ## 5. Test Cases
 
 ### Happy Path
 
-1.  **Test Case:** Successful login with `remember_me: false` (default).
-    *   **Request:** `POST /login` with `{"email": "admin@example.com", "password": "correct-horse-battery-staple"}`.
-    *   **Expected Response:** `200 OK` with a `LoginResponse` containing a token and `expires_in: 3600`.
-2.  **Test Case:** Successful login with `remember_me: true`.
-    *   **Request:** `POST /login` with `{"email": "admin@example.com", "password": "correct-horse-battery-staple", "remember_me": true}`.
-    *   **Expected Response:** `200 OK` with a `LoginResponse` containing a token and `expires_in: 86400`.
-3.  **Test Case:** Successful login with `remember_me: false` explicitly.
-    *   **Request:** `POST /login` with `{"email": "admin@example.com", "password": "correct-horse-battery-staple", "remember_me": false}`.
-    *   **Expected Response:** `200 OK` with a `LoginResponse` containing a token and `expires_in: 3600`.
-4.  **Test Case:** Successful login with `X-Request-ID` header.
-    *   **Request:** `POST /login` with `{"email": "admin@example.com", "password": "correct-horse-battery-staple"}` and `X-Request-ID: test-req-123`.
-    *   **Expected Response:** `200 OK` with a `LoginResponse`. The `X-Request-ID` should be processed internally but not returned in the response.
+*   **Test Case:** Successful login with valid credentials.
+*   **Description:** Send a POST request to `/login` with a valid email and password.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
 
-### Error Cases
+    {
+      "email": "admin@example.com",
+      "password": "correct-horse-battery-staple"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `200 OK`
+    *   Body: A JSON object containing `token` and `token_type`.
+        ```json
+        {
+          "token": "mergeflow-test-token-for-admin-user",
+          "token_type": "bearer"
+        }
+        ```
 
-1.  **Test Case:** Missing `payload` (empty request body).
-    *   **Request:** `POST /login` with an empty body `{}`.
-    *   **Expected Response:** `400 Bad Request` with detail "Email and password are required.".
-2.  **Test Case:** Missing `email` in payload.
-    *   **Request:** `POST /login` with `{"password": "correct-horse-battery-staple"}`.
-    *   **Expected Response:** `400 Bad Request` with detail "Email and password are required and must be valid.".
-3.  **Test Case:** Missing `password` in payload.
-    *   **Request:** `POST /login` with `{"email": "admin@example.com"}`.
-    *   **Expected Response:** `400 Bad Request` with detail "Email and password are required and must be valid.".
-4.  **Test Case:** Invalid email format.
-    *   **Request:** `POST /login` with `{"email": "invalid-email", "password": "correct-horse-battery-staple"}`.
-    *   **Expected Response:** `400 Bad Request` with detail "Email and password are required and must be valid.".
-5.  **Test Case:** Incorrect password.
-    *   **Request:** `POST /login` with `{"email": "admin@example.com", "password": "wrong-password"}`.
-    *   **Expected Response:** `401 Unauthorized` with detail "Invalid email or password.".
-6.  **Test Case:** Non-existent user email.
-    *   **Request:** `POST /login` with `{"email": "nonexistent@example.com", "password": "any-password"}`.
-    *   **Expected Response:** `401 Unauthorized` with detail "Invalid email or password.".
-7.  **Test Case:** Password less than min_length (if enforced by Pydantic, though not explicitly shown in diff).
-    *   **Request:** `POST /login` with `{"email": "admin@example.com", "password": "short"}`.
-    *   **Expected Response:** `400 Bad Request` with detail "Email and password are required and must be valid.". (Assuming `min_length=8` from schema definition).
+### Missing Required Field
+
+*   **Test Case:** Login with missing email.
+*   **Description:** Send a POST request to `/login` with only a password.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {
+      "password": "correct-horse-battery-staple"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `400 Bad Request`
+    *   Body: `{"detail": "Email and password are required."}`
+
+*   **Test Case:** Login with missing password.
+*   **Description:** Send a POST request to `/login` with only an email.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {
+      "email": "admin@example.com"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `400 Bad Request`
+    *   Body: `{"detail": "Email and password are required."}`
+
+### Invalid Input
+
+*   **Test Case:** Login with invalid email format.
+*   **Description:** Send a POST request to `/login` with an improperly formatted email.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {
+      "email": "invalid-email",
+      "password": "correct-horse-battery-staple"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `400 Bad Request`
+    *   Body: `{"detail": "Email and password are required and must be valid."}`
+
+*   **Test Case:** Login with password shorter than minimum length.
+*   **Description:** Send a POST request to `/login` with a password shorter than 8 characters.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {
+      "email": "admin@example.com",
+      "password": "short"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `400 Bad Request`
+    *   Body: `{"detail": "Email and password are required and must be valid."}`
+
+### Unauthorized / Forbidden
+
+*   **Test Case:** Login with incorrect password.
+*   **Description:** Send a POST request to `/login` with a valid email but incorrect password.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {
+      "email": "admin@example.com",
+      "password": "wrong-password"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `401 Unauthorized`
+    *   Body: `{"detail": "Invalid email or password."}`
+
+*   **Test Case:** Login with non-existent email.
+*   **Description:** Send a POST request to `/login` with an email not in the user store.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {
+      "email": "nonexistent@example.com",
+      "password": "any-password"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `401 Unauthorized`
+    *   Body: `{"detail": "Invalid email or password."}`
+
+### Edge Cases
+
+*   **Test Case:** Login with empty payload.
+*   **Description:** Send a POST request to `/login` with an empty JSON body.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {}
+    ```
+*   **Expected Response:**
+    *   Status Code: `400 Bad Request`
+    *   Body: `{"detail": "Email and password are required."}`
+
+*   **Test Case:** Login with `null` payload.
+*   **Description:** Send a POST request to `/login` with a `null` body.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    null
+    ```
+*   **Expected Response:**
+    *   Status Code: `400 Bad Request`
+    *   Body: `{"detail": "Email and password are required."}`
+
+*   **Test Case:** Login with email containing leading/trailing spaces.
+*   **Description:** Send a POST request to `/login` with an email that has spaces.
+*   **Request:**
+    ```http
+    POST /login HTTP/1.1
+    Host: example.com
+    Content-Type: application/json
+
+    {
+      "email": "  admin@example.com  ",
+      "password": "correct-horse-battery-staple"
+    }
+    ```
+*   **Expected Response:**
+    *   Status Code: `200 OK`
+    *   Body: A JSON object containing `token` and `token_type`. (The service normalizes the email).
 
 ## 6. Edge Cases
 
-*   **Email with leading/trailing spaces:** The `authenticate_user` function normalizes the email by stripping whitespace and converting to lowercase. This should be handled correctly.
-*   **Case sensitivity of email:** The `authenticate_user` function normalizes the email to lowercase, making the lookup case-insensitive.
-*   **`remember_me` field omitted:** The `remember_me` field defaults to `False` in the `LoginRequest` schema, so omitting it should result in the default shorter token expiration.
-*   **`remember_me` field with non-boolean value:** Pydantic validation should catch this and return a `400 Bad Request`.
+*   **Empty Payload:** The API correctly handles an empty JSON payload or a `null` body by returning a `400 Bad Request` with a "Email and password are required." message.
+*   **Whitespace in Email:** The `authenticate_user` function in `auth_service.py` strips and lowercases the email, so leading/trailing whitespace in the email address should be handled correctly.
+*   **Case Sensitivity of Email:** The `authenticate_user` function converts the email to lowercase, making the email lookup case-insensitive.
 
 ## 7. Regression Risks
 
-*   **Authentication Logic:** Any subtle changes in how `authenticate_user` handles credentials or token generation could break existing login flows. The addition of `remember_me` seems straightforward, but thorough testing is advised.
-*   **Response Structure:** Clients relying on the exact structure of the `LoginResponse` might be affected if the `expires_in` field is not handled correctly or if its presence causes issues.
-*   **Validation Errors:** Changes in Pydantic validation for `LoginRequest` could lead to unexpected `400` responses for previously valid inputs.
+*   **Removal of `remember_me`:** Any existing clients or integrations that relied on the `remember_me` flag for longer-lived tokens will be broken. They will now receive standard-duration tokens.
+*   **Removal of `expires_in` from Response:** Clients expecting the `expires_in` field in the `LoginResponse` will encounter errors. This field is no longer provided.
+*   **Simplified Error Messages:** While not explicitly stated as a change, the removal of specific examples in the `responses` section of the route might imply a simplification of error reporting, which could be a minor regression if detailed error messages were previously relied upon.
 
 ## 8. Swagger/OpenAPI-Ready Notes
 
-*   The `/login` endpoint is well-defined with clear request/response models and status codes.
-*   The `LoginRequest` schema includes `email`, `password`, and `remember_me` with appropriate types and examples.
-*   The `LoginResponse` schema includes `token`, `token_type`, and `expires_in` with types and examples.
-*   The `ErrorResponse` schema is defined for error messages.
-*   The `summary` and `description` fields are present for the endpoint and models, aiding OpenAPI generation.
-*   The `Header` parameter `X-Request-ID` is documented.
-*   The `example` fields in the request body and responses are useful for generating OpenAPI examples.
-*   The `responses` dictionary in the route decorator provides OpenAPI-compatible descriptions for status codes.
-*   The `tags` field is used to group the endpoint under "auth".
-*   The `response_model` is correctly specified.
-*   The `Body` parameter is used with `default=None` and an `example`, which is good for OpenAPI generation.
-*   The `ValidationError` handling is explicit, which is good for API clarity.
+*   The `login` endpoint is well-defined and can be directly translated into an OpenAPI operation.
+*   The request body schema (`LoginRequest`) and response body schema (`LoginResponse`, `ErrorResponse`) are clearly defined using Pydantic models, which map well to OpenAPI schemas.
+*   The `responses` section in the route definition provides clear status codes and descriptions, which can be used for OpenAPI `responses`.
+*   The `summary` field in the route decorator is suitable for the OpenAPI `summary` field.
+*   The `tags` field is present and can be used for OpenAPI `tags`.
+*   The removal of `remember_me` from the request and `expires_in` from the response simplifies the OpenAPI definition.
+*   Consider adding explicit `securitySchemes` if authentication is introduced later, though for login it's typically not required.
+*   The `Content-Type: application/json` header is implicitly handled by FastAPI for POST requests with a JSON body and doesn't need explicit mention in the OpenAPI spec unless custom handling is involved.
+```
