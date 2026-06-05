@@ -1,6 +1,36 @@
 openapi: 3.0.3
 info:
-  title: MergeFlow Test Repo API
-  version: 1.0.0
-  description: This OpenAPI document reflects the state of the API after PR 45, which reverted PR #44. The `/health` endpoint has been removed, and no new endpoints were introduced.
-paths: {}
+  title: Test MergeFlow Notion sync (retest 2)
+  version: 0.0.1
+  description: Added a new /health endpoint to the API for service health checks.
+paths:
+  /health:
+    get:
+      summary: Return service health status
+      operationId: health_check
+      tags:
+        - health
+      responses:
+        '200':
+          description: Service is healthy and ready to accept traffic.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  service:
+                    type: string
+                required:
+                  - status
+                  - service
+              examples:
+                success:
+                  value:
+                    status: ok
+                    service: mergeflow-test-repo
+        '500':
+          description: Not explicitly defined in the provided context, but a generic server error might occur.
+          content: {}
+x-mergeflow-env-vars: {}
