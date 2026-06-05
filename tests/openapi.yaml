@@ -2,66 +2,36 @@ openapi: 3.0.3
 info:
   title: MergeFlow API
   version: 1.0.0
-  description: API for MergeFlow services. This version reflects changes from PR #41.
+  description: API for MergeFlow services, including health checks.
 paths:
-  /login:
-    post:
+  /health:
+    get:
       tags:
-        - auth
-      summary: Log in with email and password.
-      operationId: login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  title: Email
-                  description: Email address for the account attempting to log in.
-                  example: admin@example.com
-                  type: string
-                password:
-                  title: Password
-                  description: Plain text password submitted by the user.
-                  example: correct-horse-battery-staple
-                  type: string
-                  minLength: 8
-              required:
-                - email
-                - password
-            example:
-              email: admin@example.com
-              password: correct-horse-battery-staple
+        - health
+      summary: Return service health status
+      operationId: health_check
       responses:
         '200':
-          description: Login succeeded and returned a bearer token.
+          description: Service is healthy and ready to accept traffic.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  token:
+                  status:
                     type: string
-                    example: mergeflow-test-token-for-admin-user
-                  token_type:
+                    example: ok
+                  service:
                     type: string
-                    example: bearer
-        '400':
-          description: The request body is missing required fields or contains invalid values.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  detail:
-                    type: string
-                    example: Email and password are required.
-              example:
-                detail: Email and password are required.
-        '401':
-          description: The supplied email and password do not match a known user.
+                    example: mergeflow-test-repo
+              examples:
+                successful_health_check:
+                  summary: Example of a successful health check response
+                  value:
+                    status: ok
+                    service: mergeflow-test-repo
+        default:
+          description: An unexpected error occurred.
           content:
             application/json:
               schema:
@@ -69,10 +39,4 @@ paths:
                 properties:
                   detail:
                     type: string
-                    example: Invalid email or password.
-              example:
-                detail: Invalid email or password.
-x-mergeflow-env-vars:
-  AUTH_TOKEN_ISSUER:
-    description: The issuer for authentication tokens. Defaults to "mergeflow-test".
-    optional: true
+                    example: Not detected from Step 3 analysis
