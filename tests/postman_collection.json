@@ -1,24 +1,39 @@
 {
   "info": {
-    "name": "Test MergeFlow Notion sync (retest 2)",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "name": "MergeFlow API - Test MergeFlow Step 7 release summary email",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "generated-from-openapi"
   },
   "item": [
     {
-      "name": "health_check",
+      "name": "Log in with email and password",
       "request": {
-        "method": "GET",
-        "header": [],
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"correct-horse-battery-staple\",\n  \"remember_me\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
         "url": {
-          "raw": "{{base_url}}/health",
+          "raw": "{{base_url}}/login",
           "host": [
             "{{base_url}}"
           ],
           "path": [
-            "health"
+            "login"
           ]
         },
-        "description": "Return service health status"
+        "description": "Validate credentials and return a bearer token for authenticated users."
       },
       "response": [],
       "event": [
@@ -27,8 +42,8 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status code is 200 or 500\", function () {",
-              "    pm.expect(pm.response.code).to.be.oneOf([200, 500]);",
+              "pm.test(\"Status code is one of the expected codes\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401]);",
               "});"
             ]
           }
