@@ -1,131 +1,92 @@
 openapi: 3.0.3
 info:
-  title: MergeFlow API - Test MergeFlow Step 7 release summary email
+  title: Test MergeFlow Step 7 release email (logout endpoint)
   version: 1.0.0
-  description: This API provides user authentication functionality, including a new `remember_me` option for generating longer-lived tokens.
+  description: |
+    This PR introduces a new API endpoint for user logout, `/logout`, within the authentication module. It allows clients to invalidate a session token by providing it in the request body.
+
+    Key changes include:
+    *   **New Endpoint**: A `POST /logout` endpoint has been added.
+    *   **New Schemas**: `LogoutRequest` and `LogoutResponse` Pydantic models have been defined to handle the request and response bodies for the logout operation.
+    *   **New Service Function**: A `revoke_session` function has been added to handle the token invalidation logic. Currently, this function provides a basic implementation that accepts any non-empty token as successfully "revoked".
+
+    The endpoint definition, request body, and response schemas are structured for OpenAPI/Swagger specification. The `summary`, `description`, `example` fields, and `default` values are provided and directly mapped. The `tags` array is set to `["auth"]`. The `responses` object correctly defines `200` and `400` status codes with their respective models and descriptions. The `ErrorResponse` schema is generic and can be reused for other error scenarios.
 paths:
-  /login:
+  /logout:
     post:
-      summary: Log in with email and password
-      description: Validate credentials and return a bearer token for authenticated users.
+      summary: Log out and revoke the current session token
       tags:
         - auth
+      description: |
+        Invalidate the supplied bearer token for the current session.
+        Note: The current implementation of token revocation is simplified for demonstration purposes and only checks for a non-empty token string, not its authenticity or prior issuance.
       requestBody:
-        description: User credentials for login.
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: '#/components/schemas/LogoutRequest'
             examples:
-              rememberMeTrue:
-                summary: Login with remember_me true
+              default:
                 value:
-                  email: admin@example.com
-                  password: correct-horse-battery-staple
-                  remember_me: true
-              rememberMeFalse:
-                summary: Login with remember_me false
-                value:
-                  email: admin@example.com
-                  password: correct-horse-battery-staple
-                  remember_me: false
-              rememberMeOmitted:
-                summary: Login with remember_me omitted
-                value:
-                  email: admin@example.com
-                  password: correct-horse-battery-staple
+                  token: mergeflow-test-session-token-for-admin-user
       responses:
         '200':
-          description: Successful authentication, returns a bearer token.
+          description: Session revoked successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: '#/components/schemas/LogoutResponse'
               examples:
-                longLivedToken:
-                  summary: Successful login with remember_me true
+                default:
                   value:
-                    token: mergeflow-test-long-lived-token-for-admin-user
-                    token_type: bearer
-                sessionToken:
-                  summary: Successful login with remember_me false or omitted
-                  value:
-                    token: mergeflow-test-session-token-for-admin-user
-                    token_type: bearer
+                    success: true
+                    message: Session revoked successfully.
         '400':
-          description: The request body is missing required fields or contains invalid values.
+          description: The request body is missing a token or contains an invalid token.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                missingFields:
-                  summary: Missing email or password
+                missingToken:
+                  summary: Missing request body or token field
                   value:
-                    detail: Email and password are required.
-                invalidFields:
-                  summary: Invalid email format or password too short
+                    detail: Token is required.
+                invalidToken:
+                  summary: Invalid token format or type
                   value:
-                    detail: Email and password are required and must be valid.
-        '401':
-          description: The supplied email and password do not match a known user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              examples:
-                invalidCredentials:
-                  summary: Invalid email or password
-                  value:
-                    detail: Invalid email or password.
+                    detail: Token is required and must be valid.
 components:
   schemas:
-    LoginRequest:
+    LogoutRequest:
       type: object
-      properties:
-        email:
-          type: string
-          format: email
-          description: Email address for the account attempting to log in.
-          example: admin@example.com
-        password:
-          type: string
-          minLength: 8
-          description: Plain text password submitted by the user.
-          example: correct-horse-battery-staple
-        remember_me:
-          type: boolean
-          default: false
-          description: When true, issue a longer-lived session token for trusted devices.
-          example: false
       required:
-        - email
-        - password
-    LoginResponse:
-      type: object
+        - token
       properties:
         token:
           type: string
-          description: Bearer token returned after successful authentication.
-          example: mergeflow-test-long-lived-token-for-admin-user
-        token_type:
+          description: Bearer token to invalidate for the current session.
+          example: mergeflow-test-session-token-for-admin-user
+    LogoutResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+          description: Whether the logout request was accepted.
+          example: true
+        message:
           type: string
-          default: bearer
-          description: Token type clients should use in the Authorization header.
-          example: bearer
-      required:
-        - token
+          default: Session revoked successfully.
+          description: Human-readable logout confirmation.
+          example: Session revoked successfully.
     ErrorResponse:
       type: object
+      required:
+        - detail
       properties:
         detail:
           type: string
-          description: Human-readable error explaining why login failed.
-          example: Email and password are required.
-      required:
-        - detail
-x-mergeflow-env-vars:
-  AUTH_TOKEN_ISSUER:
-    description: Used to prefix the generated authentication token. Defaults to "mergeflow-test" if not set.
-    default: mergeflow-test
+          description: Human-readable error explaining why the request failed.
+          example: Token is required.
