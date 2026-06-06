@@ -43,7 +43,7 @@ def login(payload: dict[str, Any] | None = Body(default=None)) -> LoginResponse:
             detail="Email and password are required and must be valid.",
         ) from None
 
-    auth_token = authenticate_user(request.email, request.password)
+    auth_token = authenticate_user(request.email, request.password, request.remember_me)
     if auth_token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
