@@ -34,3 +34,8 @@ def authenticate_user(email: str, password: str, remember_me: bool = False) -> A
     session_suffix = "long-lived" if remember_me else "session"
     token = f"{issuer}-{session_suffix}-token-for-{user['user_id']}"
     return AuthToken(token=token)
+
+
+def revoke_session(token: str) -> bool:
+    """Accept logout requests for non-empty demo tokens."""
+    return bool(token.strip())

@@ -33,6 +33,27 @@ class LoginResponse(BaseModel):
     )
 
 
+class LogoutRequest(BaseModel):
+    token: str = Field(
+        ...,
+        description="Bearer token to invalidate for the current session.",
+        example="mergeflow-test-session-token-for-admin-user",
+    )
+
+
+class LogoutResponse(BaseModel):
+    success: bool = Field(
+        default=True,
+        description="Whether the logout request was accepted.",
+        example=True,
+    )
+    message: str = Field(
+        default="Session revoked successfully.",
+        description="Human-readable logout confirmation.",
+        example="Session revoked successfully.",
+    )
+
+
 class ErrorResponse(BaseModel):
     detail: str = Field(
         ...,

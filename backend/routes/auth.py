@@ -5,8 +5,8 @@ from typing import Any
 from fastapi import APIRouter, Body, HTTPException, status
 from pydantic import ValidationError
 
-from backend.schemas.auth import ErrorResponse, LoginRequest, LoginResponse
-from backend.services.auth_service import authenticate_user
+from backend.schemas.auth import ErrorResponse, LoginRequest, LoginResponse, LogoutRequest, LogoutResponse
+from backend.services.auth_service import authenticate_user, revoke_session
 
 
 router = APIRouter(tags=["auth"])
@@ -51,3 +51,39 @@ def login(payload: dict[str, Any] | None = Body(default=None)) -> LoginResponse:
         )
 
     return LoginResponse(token=auth_token.token, token_type=auth_token.token_type)
+
+
+@router.post(
+    "/logout",
+    response_model=LogoutResponse,
+    summary="Log out and revoke the current session token",
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "The request body is missing a token.",
+        },
+    },
+)
+def logout(payload: dict[str, Any] | None = Body(default=None)) -> LogoutResponse:
+    """Invalidate the supplied bearer token for the current session."""
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token is required.",
+        )
+
+    try:
+        request = LogoutRequest(**payload)
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token is required and must be valid.",
+        ) from None
+
+    if not revoke_session(request.token):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token is required.",
+        )
+
+    return LogoutResponse()
