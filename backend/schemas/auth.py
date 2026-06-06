@@ -13,6 +13,11 @@ class LoginRequest(BaseModel):
         description="Plain text password submitted by the user.",
         example="correct-horse-battery-staple",
     )
+    remember_me: bool = Field(
+        default=False,
+        description="When true, issue a longer-lived session token for trusted devices.",
+        example=False,
+    )
 
 
 class LoginResponse(BaseModel):
