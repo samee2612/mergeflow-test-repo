@@ -1,54 +1,54 @@
 {
   "info": {
-    "name": "MergeFlow API - Test MergeFlow Step 7 release summary email",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_postman_id": "generated-from-openapi"
+    "name": "Test MergeFlow Step 7 release email (logout endpoint)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Log in with email and password",
+      "name": "Log out and revoke the current session token",
       "request": {
         "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/logout",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "logout"
+          ]
+        },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"correct-horse-battery-staple\",\n  \"remember_me\": true\n}",
+          "raw": "{\n  \"token\": \"mergeflow-test-session-token-for-admin-user\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         },
-        "url": {
-          "raw": "{{base_url}}/login",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "login"
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{bearer_token}}",
+              "type": "string"
+            }
           ]
-        },
-        "description": "Validate credentials and return a bearer token for authenticated users."
-      },
-      "response": [],
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status code is one of the expected codes\", function () {",
-              "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401]);",
-              "});"
-            ]
-          }
         }
-      ]
+      },
+      "response": []
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      }
+    ]
+  }
 }
